@@ -1,108 +1,116 @@
-pandas-challenge: PyCitySchools Analysis
+# PyCitySchools Analysis
 
-Background
+## Overview
+This project analyzes school performance across a district using Python and Pandas. By aggregating and manipulating standardized test data, we identify trends in student achievement based on factors such as school type, budget, and student demographics.
 
-	•	Objective: Explain the purpose of the project and the role of the Chief Data Scientist in analyzing district-wide standardized test results.
-	•	Goals: Describe what the analysis aims to achieve, such as helping the school board and mayor make informed decisions about school budgets and priorities.
+## Skills Demonstrated
+- **Data Wrangling:** Cleaning and organizing large datasets using Pandas  
+- **Data Aggregation:** Computing summary statistics with `.groupby()`  
+- **Conditional Analysis:** Using logic to segment performance data  
+- **Visualization:** Presenting trends using DataFrames and Matplotlib  
+- **Critical Thinking:** Identifying key patterns in education data  
 
-Project Overview
+## Key Findings  
 
-	•	Project Name: pandas-challenge
-	•	Folder: PyCitySchools
-	•	Primary Script: Jupyter notebook for analysis
+### Spending per Student  
+- Schools with lower spending per student tend to achieve **higher** average scores and better passing rates.  
+- Schools spending **less than $585 per student** had the highest passing rates:  
+  - **Reading:** 96.61%  
+  - **Math:** 93.46%  
+  - **Overall:** 90.36%  
+- Schools spending **$645–$680 per student** had significantly lower passing rates:  
+  - **Reading:** 81.13%  
+  - **Math:** 66.16%  
+  - **Overall:** 53.52%  
+- This suggests that **higher spending does not guarantee better academic outcomes** and raises questions about resource efficiency.  
 
-Files
+### School Size  
+- **Smaller and medium-sized schools** generally perform better than large schools.  
+- **Average Math Scores:**  
+  - **Small schools (<1,000 students):** 83.82  
+  - **Medium schools (1,000–2,000 students):** 83.37  
+  - **Large schools (>2,000 students):** Lower scores  
+- **Average Reading Scores:**  
+  - Medium-sized schools performed **slightly better** than both small and large schools (83.86).  
+- This pattern suggests that **smaller schools provide more personalized instruction**, improving student outcomes.  
 
-	•	Data Files: •	school_complete.csv, student_complete.csv
-	•	Notebook: PyCitySchools_Analysis.ipynb – Main analysis script
+### School Type  
+- **Charter schools consistently outperform district schools.**  
+- **Average Scores:**  
+  - **Math:** Charter (83.47) vs. District (76.96)  
+  - **Reading:** Charter (83.90) vs. District (80.97)  
+- **Passing Rates:**  
+  - **Charter Schools:** 90.43% overall  
+  - **District Schools:** 53.67% overall  
+- The data suggests that **charter schools may have more effective academic programs and resource allocation.**  
 
-Instructions
+## Code Implementation  
+The analysis follows these key steps:  
 
-District Summary
+### 1. Load and Merge Data  
+```python
+import pandas as pd
+from pathlib import Path
 
-	•	Calculations:
-	•	Total number of unique schools
-	•	Total students
-	•	Total budget
-	•	Average math score
-	•	Average reading score
-	•	% passing math
-	•	% passing reading
-	•	% overall passing
-	•	DataFrame: district_summary
+# Load datasets
+school_data = pd.read_csv("Resources/schools_complete.csv")
+student_data = pd.read_csv("Resources/students_complete.csv")
 
-School Summary
+# Merge datasets
+school_data_complete = pd.merge(student_data, school_data, how="left", on=["school_name"])
+```
 
-	•	Calculations:
-	•	School name
-	•	School type
-	•	Total students
-	•	Total school budget
-	•	Per student budget
-	•	Average math score
-	•	Average reading score
-	•	% passing math
-	•	% passing reading
-	•	% overall passing
-	•	DataFrame: per_school_summary
+### 2. District-Level Analysis
+[![Screenshot-2025-01-30-at-10-33-45-PM.png](https://i.postimg.cc/VNjg37hh/Screenshot-2025-01-30-at-10-33-45-PM.png)](https://postimg.cc/qtv2KG4c)
+```python
+# Total number of schools
+school_count = len(school_data_complete["school_name"].unique())
 
-Highest-Performing Schools (by % Overall Passing)
+# Total number of students
+student_count = len(school_data_complete["student_name"].unique())
 
-	•	Sorting and Displaying:
-	•	Sort schools by % Overall Passing in descending order
-	•	Display top 5 rows
-	•	DataFrame: top_schools
+# Total Budget
+total_budget = school_data_complete.groupby("school_name")["budget"].first().sum()
 
-Lowest-Performing Schools (by % Overall Passing)
+# Avg math and reading scores
+average_math_score = school_data_complete["math_score"].mean()
+average_reading_score = school_data_complete["reading_score"].mean()
 
-	•	Sorting and Displaying:
-	•	Sort schools by % Overall Passing in ascending order
-	•	Display top 5 rows
-	•	DataFrame: bottom_schools
+# Percentage of students passing math and reading
+passing_math_reading_count = school_data_complete[
+    (school_data_complete["math_score"] >= 70) & (school_data_complete["reading_score"] >= 70)
+].count()["student_name"]
+overall_passing_rate = passing_math_reading_count /  float(student_count) * 100
+overall_passing_rate
+```
 
-Math Scores by Grade
+### School-Level Analysis
+[![Screenshot-2025-01-30-at-10-32-10-PM.png](https://i.postimg.cc/QMHsmTnV/Screenshot-2025-01-30-at-10-32-10-PM.png)](https://postimg.cc/VSQ3Ldwc)
 
-	•	Calculations:
-	•	Average math scores for each grade (9th, 10th, 11th, 12th) at each school
-	•	DataFrame: math_scores_by_grade
+```python
+# School type, total students, total budget, per-student budget
+school_types = school_data.set_index("school_name")["type"]
+per_school_counts = school_data.set_index("school_name")["size"]
+per_school_budget = school_data.set_index("school_name")["budget"]
+per_school_capita = per_school_budget / per_school_counts
 
-Reading Scores by Grade
+# Avg math and reading scores
+per_school_math = school_data_complete.groupby('school_name')['math_score'].mean()
+per_school_reading = school_data_complete.groupby('school_name')['reading_score'].mean()
 
-	•	Calculations:
-	•	Average reading scores for each grade (9th, 10th, 11th, 12th) at each school
-	•	DataFrame: reading_scores_by_grade
+# Students passing math and reading
+students_passing_math_and_reading = school_data_complete[
+    (school_data_complete["reading_score"] >= 70) & (school_data_complete["math_score"] >= 70)
+]
+school_students_passing_math_and_reading = students_passing_math_and_reading.groupby(["school_name"]).size()
+print(school_students_passing_math_and_reading)
+```
 
-Scores by School Spending
+## Technologies Used
+- **Python**  
+- **Pandas** (Data manipulation)  
+- **Jupyter Notebook** (Interactive analysis)   
 
-	•	Creating Spending Ranges:
-	•	Use provided bins and labels for categorizing spending
-	•	Calculations:
-	•	Average math score
-	•	Average reading score
-	•	% passing math
-	•	% passing reading
-	•	% overall passing
-	•	DataFrame: spending_summary
+## References
+- Chat GPT
 
-Scores by School Size
-
-	•	Creating Size Ranges:
-	•	Use provided bins and labels for categorizing school size
-	•	Calculations:
-	•	Average scores and passing rates by school size
-	•	DataFrame: size_summary
-
-Scores by School Type
-
-	•	Group and Average:
-	•	Group by “School Type” and average the results
-	•	DataFrame: type_summary
-
-Analysis
-
-	•	Summary and Conclusions:
-	
-
-Additional Notes
-
-	•	References: Chat GPT
